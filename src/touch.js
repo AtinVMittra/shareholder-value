@@ -9,9 +9,9 @@ export function initTouch(g) {
     <div id="stick" style="display:none"><div id="knob"></div></div>
     <button id="selbtn" type="button" aria-label="Choose attack"><i id="sel-icon">👊</i><span>▲</span></button>
     <button id="fire" type="button"><b>FIRE</b><span id="fire-name">Hard No</span></button>
+    <button id="b-skills" type="button" aria-label="Skills">★<i id="b-pts"></i></button>
     <div id="tbtns">
       <button id="b-pause" type="button" aria-label="Pause">II</button>
-      <button id="b-skills" type="button" aria-label="Skills">★<i id="b-pts"></i></button>
     </div>`;
   hud.appendChild(wrap);
 

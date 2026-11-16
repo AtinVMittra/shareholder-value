@@ -238,3 +238,18 @@ kbd { display: inline-block; min-width: 40px; margin: 2px; padding: 9px 0; text-
   .link { margin-top: 4px; }
 }
 @media (max-width: 760px), (max-height: 520px) { body.touch #toasts { top: 146px; } }
+
+/* ---------- Skills star, next to the attack selector ---------- */
+#b-skills { position: fixed; right: calc(84px + env(safe-area-inset-right)); bottom: calc(122px + env(safe-area-inset-bottom));
+  width: 52px; height: 52px; padding: 0; border-radius: 50%; background: rgba(12,15,24,.88); border: 2px solid rgba(255,255,255,.3);
+  color: #8d96a8; font: 400 26px system-ui, sans-serif; line-height: 1; pointer-events: auto; touch-action: manipulation;
+  display: flex; align-items: center; justify-content: center; }
+#b-skills.glow { color: #ffd166; border-color: #ffd166; animation: starpulse 1.1s ease-in-out infinite; }
+#b-pts { position: absolute; top: -7px; right: -7px; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 11px;
+  background: #ffd166; color: #10131b; font: 800 13px system-ui, sans-serif; font-style: normal;
+  display: flex; align-items: center; justify-content: center; }
+#b-pts:empty { display: none; }
+@keyframes starpulse { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,209,102,.55); } 50% { transform: scale(1.08); box-shadow: 0 0 0 9px rgba(255,209,102,0); } }
+@media (max-width: 760px), (max-height: 520px) {
+  #b-skills { right: calc(96px + env(safe-area-inset-right)); bottom: calc(112px + env(safe-area-inset-bottom)); }
+}

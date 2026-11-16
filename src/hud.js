@@ -11,7 +11,7 @@ export class Hud {
   constructor(g) {
     this.g = g;
     this.on = {
-      begin: () => (this.seen() ? this.on.start() : this.showHow(0, 'start')),
+      begin: () => this.showHow(0, 'start'), // the tutorial runs on every Clock In and cannot be skipped
       howopen: () => this.showHow(0, this.g.state === 'paused' ? 'pause' : 'title'),
       how: (arg) => this.howAction(arg),
     };
@@ -138,7 +138,7 @@ export class Hud {
     this.el('h-zone').textContent = zoneAt(p.pos.x, p.pos.z).name;
     const pts = this.el('h-points');
     pts.classList.toggle('hidden', eco.points <= 0);
-    pts.textContent = `${g.touch ? 'Star' : 'Tab'}: ${eco.points} skill point${eco.points > 1 ? 's' : ''}`;
+    pts.textContent = `${g.touch ? 'Tap ★' : 'Tab'}: ${eco.points} skill point${eco.points > 1 ? 's' : ''}`;
     this.el('h-burn').style.width = `${p.burnout}%`;
 
     this.slotEls.forEach((el) => {
@@ -158,7 +158,7 @@ export class Hud {
       const cur = ATTACKS.find((a) => a.id === g.sel);
       fireName.textContent = cur.name;
       this.el('sel-icon').textContent = cur.icon;
-      this.el('b-pts').textContent = eco.points > 0 ? ` ${eco.points}` : '';
+      this.el('b-pts').textContent = eco.points > 0 ? String(eco.points) : '';
       this.el('b-skills').classList.toggle('glow', eco.points > 0);
     }
 
@@ -234,29 +234,12 @@ export class Hud {
   }
 
   // --- Title, onboarding and pause ---
-  seen() {
-    try {
-      return localStorage.getItem('sv-tutorial-seen') === '1';
-    } catch {
-      return false;
-    }
-  }
-
-  markSeen() {
-    try {
-      localStorage.setItem('sv-tutorial-seen', '1');
-    } catch {
-      /* private mode: the tutorial will simply show again next time */
-    }
-  }
-
   showTitle() {
     this.kind = 'title';
     this.show(`
       <div class="logo">SHAREHOLDER<br><span>VALUE</span></div>
       <p class="tag">Battle stakeholders. Close tickets. Get more tickets.<br>Reach <b>$1B</b> before the quarter ends, then face the Chief Vision Officer.</p>
-      <button class="btn" data-act="begin">Clock In</button>
-      <div><button class="link" data-act="howopen">How to play</button></div>`);
+      <button class="btn" data-act="begin">Clock In</button>`);
   }
 
   showPause() {
@@ -295,7 +278,7 @@ export class Hud {
         title: 'Skills',
         art: `<div class="chips">${icons}</div>`,
         text: (t
-          ? 'Promotions earn skill points. Tap the <b>★</b> button to unlock skills, then tap an icon above FIRE to choose which attack FIRE uses.'
+          ? 'Promotions earn skill points, and the <b>★</b> next to the attack button glows when you have one to spend. Tap it to unlock skills, then tap the round attack button to choose what FIRE uses.'
           : 'Promotions earn skill points. Press <b>Tab</b> to unlock skills, then pick an attack with <b>1 to 7</b> or the bar below. <b>J K L U I</b> cast skills instantly.'),
       },
       {
@@ -331,7 +314,6 @@ export class Hud {
     if (arg === 'next' && this.howStep < n - 1) return this.showHow(this.howStep + 1, this.howThen);
     // The tutorial cannot be skipped: it only finishes from "next" on the last step.
     if (arg !== 'next') return;
-    this.markSeen();
     if (this.howThen === 'start') this.on.start();
     else if (this.howThen === 'pause') this.showPause();
     else this.showTitle();
