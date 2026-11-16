@@ -222,7 +222,7 @@ export class Hud {
     return `<div class="controls">
       <div><b>W A S D</b> move</div><div><b>Mouse</b> aim</div>
       <div><b>Left click</b> Hard No (melee)</div><div><b>Right click</b> Reply-All (ranged)</div>
-      <div><b>Space Q E R F</b> skills</div><div><b>Tab</b> skill tree</div>
+      <div><b>J K L U I</b> skills (Space also dashes)</div><div><b>Tab</b> skill tree</div>
       <div><b>← →</b> rotate camera</div><div><b>Scroll</b> zoom · <b>Esc</b> pause · <b>M</b> mute</div>
     </div>`;
   }

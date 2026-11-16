@@ -73,7 +73,7 @@ g.hud.on.start = () => {
   g.state = 'play';
   g.hud.hideScreen();
   g.hud.toast('Welcome to Q4. Close tickets and manage stakeholders to drive Shareholder Value.');
-  setTimeout(() => g.hud.toast('Left click: Hard No. Right click: Reply-All. Coffee machines cure Burnout.'), 2500);
+  setTimeout(() => g.hud.toast('Left click: Hard No. Right click: Reply-All. Skills: J K L U I. Coffee machines cure Burnout.'), 2500);
 };
 g.hud.on.resume = () => {
   g.state = 'play';

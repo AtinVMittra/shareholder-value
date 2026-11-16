@@ -1,11 +1,11 @@
 import { Q } from './data/quips.js';
 
 export const SKILLS = [
-  { id: 'dash', name: 'Out of Office', key: 'Space', code: 'Space', cd: 4, desc: 'Dash away and turn invisible for a moment. Your auto-reply handles the rest.' },
-  { id: 'shield', name: 'Calendar Block', key: 'Q', code: 'KeyQ', cd: 14, desc: '"Focus time" blocks all damage, slows and pulls for 4 seconds.' },
-  { id: 'delegate', name: 'Delegate', key: 'E', code: 'KeyE', cd: 16, desc: 'Turn the nearest stakeholder into an ally for 10 seconds. It is their problem now.' },
-  { id: 'blast', name: 'Synergy Blast', key: 'R', code: 'KeyR', cd: 12, desc: 'A shockwave of pure alignment damages and knocks back everyone nearby.' },
-  { id: 'pause', name: 'Strategic Pause', key: 'F', code: 'KeyF', cd: 25, desc: 'Slow every stakeholder to a crawl for 5 seconds while you "take this offline".' },
+  { id: 'dash', name: 'Out of Office', key: 'J', code: 'KeyJ', alt: 'Space', cd: 4, desc: 'Dash away and turn invisible for a moment. Your auto-reply handles the rest.' },
+  { id: 'shield', name: 'Calendar Block', key: 'K', code: 'KeyK', cd: 14, desc: '"Focus time" blocks all damage, slows and pulls for 4 seconds.' },
+  { id: 'delegate', name: 'Delegate', key: 'L', code: 'KeyL', cd: 16, desc: 'Turn the nearest stakeholder into an ally for 10 seconds. It is their problem now.' },
+  { id: 'blast', name: 'Synergy Blast', key: 'U', code: 'KeyU', cd: 12, desc: 'A shockwave of pure alignment damages and knocks back everyone nearby.' },
+  { id: 'pause', name: 'Strategic Pause', key: 'I', code: 'KeyI', cd: 25, desc: 'Slow every stakeholder to a crawl for 5 seconds while you "take this offline".' },
 ];
 
 export class Skills {
@@ -34,7 +34,7 @@ export class Skills {
   }
 
   use(code) {
-    const s = SKILLS.find((k) => k.code === code);
+    const s = SKILLS.find((k) => k.code === code || k.alt === code);
     const g = this.g, p = g.player;
     if (!s || !this.unlocked.has(s.id) || this.cds[s.id] > 0 || p.stunT > 0) return;
     this.cds[s.id] = s.cd;

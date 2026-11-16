@@ -12,7 +12,7 @@ to $1B before the quarter ends. Then face the Chief Vision Officer on the Execut
 | Mouse | Aim |
 | Left click | Hard No (melee) |
 | Right click | Reply-All (ranged) |
-| Space, Q, E, R, F | Skills (unlock them with Tab) |
+| J, K, L, U, I | Skills: Out of Office, Calendar Block, Delegate, Synergy Blast, Strategic Pause (unlock them with Tab). Space also triggers Out of Office. |
 | Tab | Skill tree |
 | Left / Right arrows | Rotate the camera |
 | Scroll | Zoom |
