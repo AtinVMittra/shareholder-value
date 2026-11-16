@@ -167,3 +167,65 @@ body.touch .slot.locked { opacity: .25; }
 /* On phones, keep toasts left of the pause and star buttons. */
 body.touch #toasts { left: calc(12px + env(safe-area-inset-left)); transform: none; align-items: flex-start; width: calc(100vw - 120px); top: 100px; }
 body.touch .toast { text-align: left; }
+
+/* ---------- Joystick icon, parallel to FIRE ---------- */
+#stickhint { position: fixed; left: calc(16px + env(safe-area-inset-left)); bottom: calc(16px + env(safe-area-inset-bottom));
+  width: 96px; height: 96px; border-radius: 50%; border: 3px solid rgba(255,255,255,.4); background: rgba(255,255,255,.1);
+  pointer-events: none; transition: opacity .12s; }
+#stickhint i { position: absolute; font-style: normal; font-size: 11px; color: rgba(255,255,255,.7); line-height: 1; }
+#stickhint i:nth-child(1) { left: 50%; top: 6px; transform: translateX(-50%); }
+#stickhint i:nth-child(2) { left: 50%; bottom: 6px; transform: translateX(-50%); }
+#stickhint i:nth-child(3) { left: 7px; top: 50%; transform: translateY(-50%); }
+#stickhint i:nth-child(4) { right: 7px; top: 50%; transform: translateY(-50%); }
+#stickhint .pad { position: absolute; left: 50%; top: 50%; width: 42px; height: 42px; margin: -21px 0 0 -21px; border-radius: 50%;
+  background: rgba(255,255,255,.4); border: 2px solid rgba(255,255,255,.55); }
+#stickhint.active { opacity: 0; }
+@media (max-width: 760px), (max-height: 520px) { #stickhint { width: 88px; height: 88px; } }
+
+/* ---------- Onboarding stepper ---------- */
+.btn.ghost { background: rgba(255,255,255,.14); color: #fff; margin-right: 8px; }
+.link { margin-top: 14px; padding: 6px 10px; background: none; border: 0; color: #9aa3b5; font: 600 14px system-ui, sans-serif;
+  text-decoration: underline; cursor: pointer; }
+.link:hover { color: #fff; }
+.how { max-width: 460px; margin: 0 auto; }
+.dots { display: flex; gap: 8px; justify-content: center; margin-bottom: 16px; }
+.dots i { width: 9px; height: 9px; border-radius: 50%; background: rgba(255,255,255,.25); }
+.dots i.on { background: #3ddc84; transform: scale(1.25); }
+.how-art { min-height: 120px; display: flex; align-items: center; justify-content: center; margin-bottom: 18px; }
+.how h2 { margin: 0 0 6px; font-size: 28px; }
+.how h2 small { display: block; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: #ffd166; margin-bottom: 2px; }
+.how-text { font-size: 16px; line-height: 1.5; margin: 0 0 12px; opacity: .95; }
+.how-text b { color: #ffd166; }
+.how-nav { margin-top: 6px; }
+kbd { display: inline-block; min-width: 40px; margin: 2px; padding: 9px 0; text-align: center; font: 800 18px ui-monospace, Menlo, monospace;
+  color: #fff; background: #2a3042; border: 1px solid rgba(255,255,255,.3); border-bottom-width: 4px; border-radius: 8px; }
+.keys { text-align: center; }
+.mouse { font-size: 56px; line-height: 1; }
+.mouse span { display: block; font: 700 13px system-ui, sans-serif; color: #ffd166; margin-top: 4px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; max-width: 340px; }
+.chip { width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; font-size: 22px;
+  background: rgba(12,15,24,.78); border: 1px solid rgba(255,255,255,.25); border-radius: 8px; }
+.chip.on { border-color: #3ddc84; box-shadow: 0 0 0 2px #3ddc84; background: rgba(61,220,132,.18); }
+.burn-art { display: flex; align-items: center; gap: 14px; }
+.burn-art .bar { width: 200px; }
+.burn-art span { font-size: 40px; }
+.mock-fire { width: 96px; height: 96px; border-radius: 50%; border: 3px solid rgba(255,255,255,.55); background: rgba(230,57,70,.78);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; font: 800 20px system-ui, sans-serif; line-height: 1.1; }
+.mock-fire span { font-size: 10px; font-weight: 600; }
+.mock-stick { position: relative; width: 96px; height: 96px; border-radius: 50%; border: 3px solid rgba(255,255,255,.4); background: rgba(255,255,255,.1); }
+.mock-stick i { position: absolute; font-style: normal; font-size: 11px; color: rgba(255,255,255,.7); }
+.mock-stick i:nth-child(1) { left: 50%; top: 6px; transform: translateX(-50%); }
+.mock-stick i:nth-child(2) { left: 50%; bottom: 6px; transform: translateX(-50%); }
+.mock-stick i:nth-child(3) { left: 7px; top: 50%; transform: translateY(-50%); }
+.mock-stick i:nth-child(4) { right: 7px; top: 50%; transform: translateY(-50%); }
+.mock-stick .knob { position: absolute; left: 50%; top: 50%; width: 42px; height: 42px; margin: -21px 0 0 -21px; border-radius: 50%;
+  background: rgba(255,255,255,.4); border: 2px solid rgba(255,255,255,.55); animation: nudge 2.4s ease-in-out infinite; }
+@keyframes nudge { 0%, 100% { transform: translate(0,0); } 25% { transform: translate(12px,-10px); } 60% { transform: translate(-12px,8px); } }
+@media (max-height: 520px) {
+  .how-art { min-height: 96px; margin-bottom: 8px; }
+  .how h2 { font-size: 22px; }
+  .how-text { font-size: 14px; margin-bottom: 6px; }
+  .dots { margin-bottom: 8px; }
+  .mock-fire, .mock-stick { transform: scale(.8); }
+  .link { margin-top: 4px; }
+}

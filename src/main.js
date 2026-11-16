@@ -127,7 +127,7 @@ addEventListener('keydown', (e) => {
   if (e.repeat) return;
   if (e.code === 'KeyM') g.audio.muted = !g.audio.muted;
   if (g.state === 'title') {
-    if (e.code === 'Enter') g.hud.on.start();
+    if (e.code === 'Enter') g.hud.onEnter();
   } else if (g.state === 'play') {
     g.input.keys.add(e.code);
     if (e.code === 'Tab') g.openTree();

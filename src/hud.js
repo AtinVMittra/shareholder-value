@@ -10,7 +10,11 @@ const v = new THREE.Vector3();
 export class Hud {
   constructor(g) {
     this.g = g;
-    this.on = {};
+    this.on = {
+      begin: () => (this.seen() ? this.on.start() : this.showHow(0, 'start')),
+      howopen: () => this.showHow(0, this.g.state === 'paused' ? 'pause' : 'title'),
+      how: (arg) => this.howAction(arg),
+    };
     this.bubbles = [];
     this.floats = [];
     this.chartT = 0;
@@ -225,36 +229,108 @@ export class Hud {
     this.hud.classList.remove('hidden');
   }
 
-  controlsHtml() {
-    if (this.g.touch) {
-      return `<div class="controls one">
-        <div><b>Left thumb</b> drag anywhere on the left to move</div>
-        <div><b>Right thumb</b> hold <b>FIRE</b> to use your selected attack. It auto-aims at the nearest stakeholder.</div>
-        <div><b>Icon bar</b> tap an icon to choose Hard No, Reply-All or an unlocked skill</div>
-        <div><b>★</b> spend skill points · <b>II</b> pause · best in landscape</div>
-      </div>`;
+  // --- Title, onboarding and pause ---
+  seen() {
+    try {
+      return localStorage.getItem('sv-tutorial-seen') === '1';
+    } catch {
+      return false;
     }
-    return `<div class="controls">
-      <div><b>W A S D</b> move</div><div><b>Mouse</b> aim (attacks also auto-aim)</div>
-      <div><b>Left click</b> fire the selected attack</div><div><b>Right click</b> Reply-All</div>
-      <div><b>1 – 7</b> or click the bar: pick an attack</div><div><b>J K L U I</b> cast a skill instantly (Space also dashes)</div>
-      <div><b>Tab</b> skill tree</div><div><b>← →</b> rotate camera</div>
-      <div><b>Scroll</b> zoom</div><div><b>Esc</b> pause · <b>M</b> mute</div>
-    </div>`;
+  }
+
+  markSeen() {
+    try {
+      localStorage.setItem('sv-tutorial-seen', '1');
+    } catch {
+      /* private mode: the tutorial will simply show again next time */
+    }
   }
 
   showTitle() {
+    this.kind = 'title';
     this.show(`
       <div class="logo">SHAREHOLDER<br><span>VALUE</span></div>
-      <p class="tag">A workplace survival game. Battle stakeholders. Close tickets. Get more tickets.<br>
-      Reach <b>$1B</b> before the quarter ends, then face the Chief Vision Officer.</p>
-      ${this.controlsHtml()}
-      <button class="btn" data-act="start">Clock In</button>`);
+      <p class="tag">Battle stakeholders. Close tickets. Get more tickets.<br>Reach <b>$1B</b> before the quarter ends, then face the Chief Vision Officer.</p>
+      <button class="btn" data-act="begin">Clock In</button>
+      <div><button class="link" data-act="howopen">How to play</button></div>`);
   }
 
   showPause() {
+    this.kind = 'pause';
     this.show(`<h1>OUT TO LUNCH</h1><p class="tag">The backlog will still be here when you get back.</p>
-      ${this.controlsHtml()}<button class="btn" data-act="resume">Back to Work</button>`);
+      <button class="btn" data-act="resume">Back to Work</button>
+      <div><button class="link" data-act="howopen">How to play</button></div>`);
+  }
+
+  // The Enter key follows the main button on the title and tutorial screens.
+  onEnter() {
+    if (this.kind === 'title') this.on.begin();
+    else if (this.kind === 'how') this.on.how('next');
+  }
+
+  steps() {
+    const t = this.g.touch;
+    const icons = ATTACKS.map((a, i) => `<span class="chip ${i === 0 ? 'on' : ''}">${a.icon}</span>`).join('');
+    return [
+      {
+        title: 'How to move',
+        art: t
+          ? '<div class="mock-stick"><i>▲</i><i>▼</i><i>◀</i><i>▶</i><div class="knob"></div></div>'
+          : '<div class="keys"><kbd>W</kbd><div><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></div></div>',
+        text: t
+          ? 'Drag your <b>left thumb</b> on the left side of the screen, or use the joystick at the bottom left.'
+          : 'Walk with <b>W A S D</b>. Turn the camera with the <b>← →</b> arrow keys.',
+      },
+      {
+        title: 'How to fire',
+        art: t ? '<div class="mock-fire"><b>FIRE</b><span>Hard No</span></div>' : '<div class="mouse">🖱️<span>Left click</span></div>',
+        text: (t ? 'Hold <b>FIRE</b> with your right thumb.' : '<b>Left click</b> to fire, and hold to keep going.') +
+          ' Your attack aims at the nearest stakeholder for you.',
+      },
+      {
+        title: 'Skills',
+        art: `<div class="chips">${icons}</div>`,
+        text: (t
+          ? 'Promotions earn skill points. Tap the <b>★</b> button to unlock skills, then tap an icon above FIRE to choose which attack FIRE uses.'
+          : 'Promotions earn skill points. Press <b>Tab</b> to unlock skills, then pick an attack with <b>1 to 7</b> or the bar below. <b>J K L U I</b> cast skills instantly.'),
+      },
+      {
+        title: 'Reduce burnout',
+        art: '<div class="burn-art"><div class="bar"><div style="width:64%"></div></div><span>☕</span></div>',
+        text: 'Every hit raises <b>Burnout</b>, and at 100 you are done. Stand next to a glowing <b>coffee machine</b> to cut it, or stay out of trouble for a few seconds and it fades.',
+      },
+    ];
+  }
+
+  // `then` is where to go afterwards: 'start' (begin the game), 'pause' or 'title'.
+  showHow(step, then) {
+    this.kind = 'how';
+    this.howStep = step;
+    this.howThen = then;
+    const steps = this.steps(), st = steps[step], last = step === steps.length - 1;
+    const dots = steps.map((_, i) => `<i class="${i === step ? 'on' : ''}"></i>`).join('');
+    this.show(`<div class="how">
+      <div class="dots">${dots}</div>
+      <div class="how-art">${st.art}</div>
+      <h2><small>${step + 1} of ${steps.length}</small>${st.title}</h2>
+      <p class="how-text">${st.text}</p>
+      <div class="how-nav">
+        ${step > 0 ? '<button class="btn ghost" data-act="how" data-arg="back">Back</button>' : ''}
+        <button class="btn" data-act="how" data-arg="next">${last ? (then === 'start' ? 'Start Working' : 'Got It') : 'Next'}</button>
+      </div>
+      ${last ? '' : '<div><button class="link" data-act="how" data-arg="skip">Skip</button></div>'}
+    </div>`);
+  }
+
+  howAction(arg) {
+    const n = this.steps().length;
+    if (arg === 'back') return this.showHow(Math.max(0, this.howStep - 1), this.howThen);
+    if (arg === 'next' && this.howStep < n - 1) return this.showHow(this.howStep + 1, this.howThen);
+    // Last step, or skipped.
+    this.markSeen();
+    if (this.howThen === 'start') this.on.start();
+    else if (this.howThen === 'pause') this.showPause();
+    else this.showTitle();
   }
 
   showTree() {

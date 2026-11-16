@@ -5,6 +5,7 @@ export function initTouch(g) {
   const wrap = document.createElement('div');
   wrap.id = 'touch';
   wrap.innerHTML = `
+    <div id="stickhint" aria-hidden="true"><i>▲</i><i>▼</i><i>◀</i><i>▶</i><div class="pad"></div></div>
     <div id="stick" style="display:none"><div id="knob"></div></div>
     <button id="fire" type="button"><b>FIRE</b><span id="fire-name">Hard No</span></button>
     <div id="tbtns">
@@ -14,7 +15,7 @@ export function initTouch(g) {
   hud.appendChild(wrap);
 
   const $ = (id) => document.getElementById(id);
-  const stickEl = $('stick'), knob = $('knob'), fire = $('fire');
+  const stickEl = $('stick'), knob = $('knob'), fire = $('fire'), hint = $('stickhint');
   const canvas = g.renderer.domElement;
   const R = 58;
   let sid = null, ox = 0, oy = 0;
@@ -32,6 +33,7 @@ export function initTouch(g) {
     sid = null;
     g.input.stick.x = g.input.stick.y = 0;
     stickEl.style.display = 'none';
+    hint.classList.remove('active');
   }
 
   canvas.addEventListener('pointerdown', (e) => {
@@ -40,6 +42,14 @@ export function initTouch(g) {
     sid = e.pointerId;
     ox = e.clientX;
     oy = e.clientY;
+    // Touching the joystick icon anchors the stick on it; touching elsewhere on the left floats it under the thumb.
+    const r = hint.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    if (Math.hypot(ox - cx, oy - cy) < r.width * 0.85) {
+      ox = cx;
+      oy = cy;
+    }
+    hint.classList.add('active');
     capture(canvas, sid);
     stickEl.style.display = 'block';
     stickEl.style.left = ox + 'px';

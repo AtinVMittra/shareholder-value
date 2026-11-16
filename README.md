@@ -25,11 +25,13 @@ Hard No also lunges you into range.
 | Esc or P | Pause |
 | M | Mute |
 
+The first time you press Clock In, a four-step tutorial (move, fire, skills, burnout) runs once. You can reopen it from "How to play" on the title and pause screens.
+
 ### Phone and tablet
 
 | Input | Action |
 | --- | --- |
-| Left thumb, drag on the left side | Move (floating joystick) |
+| Left thumb: joystick icon at the bottom left, or drag anywhere on the left side | Move |
 | Right thumb, hold FIRE | Use the selected attack |
 | Tap an icon in the bar above FIRE | Select an attack (the quick menu) |
 | Star button | Skill tree (glows when you have a point to spend) |
