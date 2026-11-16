@@ -6,18 +6,37 @@ to $1B before the quarter ends. Then face the Chief Vision Officer on the Execut
 
 ## Controls
 
+Attacks auto-aim at the nearest stakeholder you can see. You pick an attack, then fire it.
+Hard No also lunges you into range.
+
+### Keyboard and mouse
+
 | Input | Action |
 | --- | --- |
 | W A S D | Move |
-| Mouse | Aim |
-| Left click | Hard No (melee) |
-| Right click | Reply-All (ranged) |
-| J, K, L, U, I | Skills: Out of Office, Calendar Block, Delegate, Synergy Blast, Strategic Pause (unlock them with Tab). Space also triggers Out of Office. |
+| Mouse | Aim (used when nothing is in sight) |
+| Left click (hold to repeat) | Fire the selected attack |
+| Right click | Reply-All, whatever is selected |
+| 1 to 7, or click the icon bar | Select an attack |
+| J, K, L, U, I | Cast a skill instantly: Out of Office, Calendar Block, Delegate, Synergy Blast, Strategic Pause (unlock them with Tab). Space also triggers Out of Office. |
 | Tab | Skill tree |
 | Left / Right arrows | Rotate the camera |
 | Scroll | Zoom |
 | Esc or P | Pause |
 | M | Mute |
+
+### Phone and tablet
+
+| Input | Action |
+| --- | --- |
+| Left thumb, drag on the left side | Move (floating joystick) |
+| Right thumb, hold FIRE | Use the selected attack |
+| Tap an icon in the bar above FIRE | Select an attack (the quick menu) |
+| Star button | Skill tree (glows when you have a point to spend) |
+| II button | Pause |
+
+A skill fires once and then your selection returns to your last basic attack. The game works in portrait,
+but landscape is better. Add `?touch` to the URL to force the phone layout on a desktop browser.
 
 ## Run it locally
 

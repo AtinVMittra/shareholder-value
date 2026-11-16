@@ -65,7 +65,7 @@ export class Economy {
       g.spawn('cvo', 50, -20);
       g.hud.toast('The Earnings Call is live. Report to the Executive Floor.');
     }
-    g.hud.toast('Skill point earned. Press Tab to spend it.');
+    g.hud.toast(g.touch ? 'Skill point earned. Tap the star to spend it.' : 'Skill point earned. Press Tab to spend it.');
   }
 
   closeTicket(i) {

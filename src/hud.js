@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { fmtSV } from './util.js';
 import { zoneAt } from './world/office.js';
 import { RANKS, ENDINGS } from './data/quips.js';
-import { SKILLS } from './skills.js';
+import { SKILLS, ATTACKS } from './skills.js';
 
 const v = new THREE.Vector3();
 
@@ -51,15 +51,15 @@ export class Hud {
     this.card = this.el('card');
     this.chart = this.el('h-chart').getContext('2d');
 
-    const slots = [
-      { key: 'LMB', name: 'Hard No' },
-      { key: 'RMB', name: 'Reply-All' },
-      ...SKILLS.map((s) => ({ key: s.key, name: s.name, id: s.id })),
-    ];
-    this.el('h-slots').innerHTML = slots
-      .map((s) => `<div class="slot" data-id="${s.id || ''}"><div class="cd"></div><b>${s.key}</b><span>${s.name}</span></div>`)
+    this.el('h-slots').innerHTML = ATTACKS
+      .map((s) => `<div class="slot" data-id="${s.id}" title="${s.name}"><div class="cd"></div><i>${s.icon}</i><b>${s.key}</b><span>${s.name}</span></div>`)
       .join('');
     this.slotEls = [...this.el('h-slots').children];
+    // Click or tap an icon to select that attack.
+    this.el('h-slots').addEventListener('click', (e) => {
+      const slot = e.target.closest('.slot');
+      if (slot) this.g.select(slot.dataset.id);
+    });
   }
 
   toast(msg) {
@@ -132,20 +132,27 @@ export class Hud {
     this.el('h-zone').textContent = zoneAt(p.pos.x, p.pos.z).name;
     const pts = this.el('h-points');
     pts.classList.toggle('hidden', eco.points <= 0);
-    pts.textContent = `Tab: ${eco.points} skill point${eco.points > 1 ? 's' : ''}`;
+    pts.textContent = `${g.touch ? 'Star' : 'Tab'}: ${eco.points} skill point${eco.points > 1 ? 's' : ''}`;
     this.el('h-burn').style.width = `${p.burnout}%`;
 
-    const cds = [p.meleeCd / 0.4, p.shotCd / 0.55];
-    this.slotEls.forEach((el, i) => {
+    this.slotEls.forEach((el) => {
       const id = el.dataset.id;
       let k;
-      if (id) {
-        const s = SKILLS[i - 2];
+      if (id === 'melee') k = p.meleeCd / 0.4;
+      else if (id === 'shot') k = p.shotCd / 0.55;
+      else {
         el.classList.toggle('locked', !g.skills.unlocked.has(id));
-        k = g.skills.cds[id] / s.cd;
-      } else k = cds[i];
+        k = g.skills.cds[id] / SKILLS.find((s) => s.id === id).cd;
+      }
+      el.classList.toggle('sel', id === g.sel);
       el.firstChild.style.height = `${Math.max(0, Math.min(1, k)) * 100}%`;
     });
+    const fireName = this.el('fire-name');
+    if (fireName) {
+      fireName.textContent = ATTACKS.find((a) => a.id === g.sel).name;
+      this.el('b-pts').textContent = eco.points > 0 ? ` ${eco.points}` : '';
+      this.el('b-skills').classList.toggle('glow', eco.points > 0);
+    }
 
     // Boss health bar
     const boss = g.enemies.find((e) => e.cfg.boss && e.awake && !e.dead);
@@ -219,11 +226,20 @@ export class Hud {
   }
 
   controlsHtml() {
+    if (this.g.touch) {
+      return `<div class="controls one">
+        <div><b>Left thumb</b> drag anywhere on the left to move</div>
+        <div><b>Right thumb</b> hold <b>FIRE</b> to use your selected attack. It auto-aims at the nearest stakeholder.</div>
+        <div><b>Icon bar</b> tap an icon to choose Hard No, Reply-All or an unlocked skill</div>
+        <div><b>★</b> spend skill points · <b>II</b> pause · best in landscape</div>
+      </div>`;
+    }
     return `<div class="controls">
-      <div><b>W A S D</b> move</div><div><b>Mouse</b> aim</div>
-      <div><b>Left click</b> Hard No (melee)</div><div><b>Right click</b> Reply-All (ranged)</div>
-      <div><b>J K L U I</b> skills (Space also dashes)</div><div><b>Tab</b> skill tree</div>
-      <div><b>← →</b> rotate camera</div><div><b>Scroll</b> zoom · <b>Esc</b> pause · <b>M</b> mute</div>
+      <div><b>W A S D</b> move</div><div><b>Mouse</b> aim (attacks also auto-aim)</div>
+      <div><b>Left click</b> fire the selected attack</div><div><b>Right click</b> Reply-All</div>
+      <div><b>1 – 7</b> or click the bar: pick an attack</div><div><b>J K L U I</b> cast a skill instantly (Space also dashes)</div>
+      <div><b>Tab</b> skill tree</div><div><b>← →</b> rotate camera</div>
+      <div><b>Scroll</b> zoom</div><div><b>Esc</b> pause · <b>M</b> mute</div>
     </div>`;
   }
 
@@ -248,7 +264,7 @@ export class Hud {
       const btn = has
         ? '<span class="owned">Unlocked</span>'
         : `<button class="btn small" data-act="unlock" data-arg="${s.id}" ${pts > 0 ? '' : 'disabled'}>Unlock</button>`;
-      return `<div class="skill ${has ? 'has' : ''}"><div class="key">${s.key}</div><div><h3>${s.name}</h3><p>${s.desc}</p></div>${btn}</div>`;
+      return `<div class="skill ${has ? 'has' : ''}"><div class="key">${this.g.touch ? s.icon : s.key}</div><div><h3>${s.name}</h3><p>${s.desc}</p></div>${btn}</div>`;
     }).join('');
     this.show(`<h1>CAREER DEVELOPMENT PLAN</h1>
       <p class="tag">Skill points available: <b>${pts}</b>. You earn one with every promotion.</p>

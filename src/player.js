@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import { makeHumanoid, animateWalk, resolveCircle } from './util.js';
+import { makeHumanoid, animateWalk, resolveCircle, pointBlocked } from './util.js';
+import { SKILLS } from './skills.js';
 import { Q } from './data/quips.js';
 
 export class Player {
@@ -87,13 +88,84 @@ export class Player {
   }
 
   moveDir() {
-    const k = this.g.input.keys;
-    const f = (k.has('KeyW') ? 1 : 0) - (k.has('KeyS') ? 1 : 0);
-    const r = (k.has('KeyD') ? 1 : 0) - (k.has('KeyA') ? 1 : 0);
+    const k = this.g.input.keys, s = this.g.input.stick;
+    const f = (k.has('KeyW') ? 1 : 0) - (k.has('KeyS') ? 1 : 0) - s.y; // stick y is positive downwards
+    const r = (k.has('KeyD') ? 1 : 0) - (k.has('KeyA') ? 1 : 0) + s.x;
     const yaw = this.g.camYaw;
     const v = new THREE.Vector3(-Math.sin(yaw) * f + Math.cos(yaw) * r, 0, -Math.cos(yaw) * f - Math.sin(yaw) * r);
     if (v.lengthSq() > 0) v.normalize();
     return v;
+  }
+
+  // --- Auto-aim ---
+  // Nearest living stakeholder within `range` that has a clear line to us (furniture does not block it).
+  pickTarget(range) {
+    let best = null, bd = range;
+    for (const e of this.g.enemies) {
+      if (e.ally || e.dead || !e.awake) continue;
+      const d = Math.hypot(e.pos.x - this.pos.x, e.pos.z - this.pos.z) - e.radius;
+      if (d < bd && this.clearTo(e.pos)) {
+        bd = d;
+        best = e;
+      }
+    }
+    return best;
+  }
+
+  clearTo(p) {
+    const dx = p.x - this.pos.x, dz = p.z - this.pos.z;
+    const n = Math.ceil(Math.hypot(dx, dz) / 1.5);
+    for (let i = 1; i < n; i++) {
+      if (pointBlocked(this.pos.x + (dx * i) / n, this.pos.z + (dz * i) / n, this.g.world.colliders, 0, true)) return false;
+    }
+    return true;
+  }
+
+  faceTo(p) {
+    const dx = p.x - this.pos.x, dz = p.z - this.pos.z;
+    const l = Math.hypot(dx, dz);
+    if (l > 0.001) this.facing.set(dx / l, 0, dz / l);
+  }
+
+  // "Hard No": lunges at the nearest stakeholder, then shoves everything in front of you.
+  melee() {
+    if (this.meleeCd > 0) return;
+    this.meleeCd = 0.4;
+    const t = this.pickTarget(9);
+    if (t) {
+      this.faceTo(t.pos);
+      const d = Math.hypot(t.pos.x - this.pos.x, t.pos.z - this.pos.z);
+      const step = Math.min(6, Math.max(0, d - t.radius - 2.2));
+      this.pos.addScaledVector(this.facing, step);
+      resolveCircle(this.pos, this.radius, this.g.world.colliders);
+    }
+    this.g.combat.melee(this.pos, this.facing, 3.4, 0.3, 22, 10);
+    this.parts.armR.rotation.x = -2.2;
+  }
+
+  // "Reply-All": sends an email at the nearest stakeholder it can see.
+  shot() {
+    if (this.shotCd > 0) return;
+    this.shotCd = 0.55;
+    const t = this.pickTarget(26);
+    if (t) this.faceTo(t.pos);
+    this.g.combat.shoot({
+      x: this.pos.x + this.facing.x * 0.8, z: this.pos.z + this.facing.z * 0.8, dir: this.facing,
+      speed: 26, dmg: 14, friendly: true, color: 0xffffff, size: 0.5, splash: 2.4, life: 1.6, mail: true,
+    });
+    this.g.audio.sfx('shoot');
+  }
+
+  // The FIRE control (left click, or the on-screen button) triggers whichever attack is selected.
+  useSelected() {
+    const g = this.g;
+    if (g.sel === 'melee') this.melee();
+    else if (g.sel === 'shot') this.shot();
+    else {
+      const s = SKILLS.find((k) => k.id === g.sel);
+      // Skills are one-shots: after one fires, go back to the basic attack you had.
+      if (s && g.skills.cast(s)) g.sel = g.lastBasic;
+    }
   }
 
   update(dt) {
@@ -109,41 +181,38 @@ export class Player {
     this.sinceHit += dt;
     if (this.sinceHit > 5) this.burnout = Math.max(0, this.burnout - 4 * dt);
 
-    // Face the mouse cursor
-    const aim = g.input.aim;
-    const ax = aim.x - this.pos.x, az = aim.z - this.pos.z;
-    const al = Math.hypot(ax, az);
-    if (al > 0.3 && this.stunT <= 0) this.facing.set(ax / al, 0, az / al);
+    const m = this.moveDir();
+
+    // Facing: the mouse on desktop; on a phone, the nearest stakeholder, else the way you are walking.
+    if (this.stunT <= 0) {
+      if (g.touch) {
+        const t = this.pickTarget(16);
+        if (t) this.faceTo(t.pos);
+        else if (m.lengthSq() > 0) this.facing.copy(m);
+      } else {
+        const aim = g.input.aim;
+        const ax = aim.x - this.pos.x, az = aim.z - this.pos.z;
+        const al = Math.hypot(ax, az);
+        if (al > 0.3) this.facing.set(ax / al, 0, az / al);
+      }
+    }
 
     let moving = false;
     if (this.dashT > 0) {
       this.pos.addScaledVector(this.dashDir, 30 * dt);
       moving = true;
-    } else if (this.stunT <= 0) {
-      const m = this.moveDir();
-      if (m.lengthSq() > 0) {
-        this.pos.addScaledVector(m, 9 * (this.slowT > 0 ? 0.5 : 1) * dt);
-        moving = true;
-      }
+    } else if (this.stunT <= 0 && m.lengthSq() > 0) {
+      this.pos.addScaledVector(m, 9 * (this.slowT > 0 ? 0.5 : 1) * dt);
+      moving = true;
     }
     resolveCircle(this.pos, this.radius, g.world.colliders);
     this.pos.x = Math.max(-59, Math.min(59, this.pos.x));
     this.pos.z = Math.max(-39, Math.min(39, this.pos.z));
 
     if (this.stunT <= 0) {
-      if (g.input.mouse[0] && this.meleeCd <= 0) {
-        this.meleeCd = 0.4;
-        g.combat.melee(this.pos, this.facing, 3.4, 0.3, 22, 10);
-        this.parts.armR.rotation.x = -2.2;
-      }
-      if (g.input.mouse[2] && this.shotCd <= 0) {
-        this.shotCd = 0.55;
-        g.combat.shoot({
-          x: this.pos.x + this.facing.x * 0.8, z: this.pos.z + this.facing.z * 0.8, dir: this.facing,
-          speed: 26, dmg: 14, friendly: true, color: 0xffffff, size: 0.5, splash: 2.4, life: 1.6, mail: true,
-        });
-        g.audio.sfx('shoot');
-      }
+      const input = g.input;
+      if (input.fire || (!g.touch && input.mouse[0])) this.useSelected();
+      if (!g.touch && input.mouse[2]) this.shot(); // right click: Reply-All, whatever is selected
     }
 
     this.group.position.copy(this.pos);
@@ -154,15 +223,15 @@ export class Player {
     const op = this.invisT > 0 ? 0.3 : 1;
     if (this.op !== op) {
       this.op = op;
-      for (const m of this.mats) {
-        m.transparent = op < 1;
-        m.opacity = op;
+      for (const mt of this.mats) {
+        mt.transparent = op < 1;
+        mt.opacity = op;
       }
     }
     const tint = this.stunT > 0 ? 0x555500 : this.slowT > 0 ? 0x440044 : 0x000000;
     if (this.tint !== tint) {
       this.tint = tint;
-      for (const m of this.mats) m.emissive.setHex(tint);
+      for (const mt of this.mats) mt.emissive.setHex(tint);
     }
   }
 }

@@ -35,6 +35,7 @@ export class Sfx {
 
   sfx(name) {
     switch (name) {
+      case 'select': this.tone(600, 0.04, 'triangle', 0.04); break;
       case 'swing': this.tone(220, 0.08, 'sawtooth', 0.05, -120); break;
       case 'shoot': this.tone(660, 0.1, 'square', 0.04, 300); break;
       case 'throw': this.tone(300, 0.12, 'triangle', 0.05, -150); break;

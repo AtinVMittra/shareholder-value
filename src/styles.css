@@ -31,7 +31,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #141824; col
 .burn { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 11px; font-weight: 700; letter-spacing: .1em; }
 .burn .bar { flex: 1; }
 .slots { display: flex; gap: 6px; justify-content: center; }
-.slot { position: relative; flex: 1; max-width: 100px; padding: 6px 4px; text-align: center; overflow: hidden;
+.slot { pointer-events: auto; cursor: pointer; position: relative; flex: 1; max-width: 100px; padding: 6px 4px; text-align: center; overflow: hidden;
   background: rgba(12,15,24,.78); border: 1px solid rgba(255,255,255,.18); border-radius: 8px; }
 .slot b { display: block; font-size: 13px; color: #ffd166; position: relative; }
 .slot span { display: block; font-size: 10px; opacity: .85; position: relative; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -59,10 +59,10 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #141824; col
 .float.good { color: #3ddc84; }
 .float.bad { color: #ff7b7b; }
 
-#screen { position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
+#screen { position: absolute; inset: 0; display: none; align-items: flex-start; justify-content: center;
   background: rgba(8,10,18,.82); pointer-events: auto; overflow: auto; padding: 20px; }
 #screen.show { display: flex; }
-.sheet { width: min(680px, 100%); text-align: center; }
+.sheet { width: min(680px, 100%); text-align: center; margin: auto; }
 .logo { font-size: clamp(40px, 9vw, 84px); font-weight: 900; line-height: .95; letter-spacing: -.02em; }
 .logo span { color: #3ddc84; }
 h1 { font-size: clamp(28px, 6vw, 48px); margin: 0 0 8px; }
@@ -90,7 +90,7 @@ h1.lose { color: #ff5d5d; }
 .stats b { display: block; font-size: 20px; color: #ffd166; }
 
 /* Small windows and phones: shrink the HUD so nothing overlaps. */
-@media (max-width: 760px) {
+@media (max-width: 760px), (max-height: 520px) {
   .panel { padding: 6px 8px; top: 8px; }
   .tl { left: 8px; width: 118px; }
   .tr { right: 8px; min-width: 0; }
@@ -109,3 +109,61 @@ h1.lose { color: #ff5d5d; }
   .bubble { font-size: 10px; max-width: 150px; }
   .controls { font-size: 11px; }
 }
+
+.slot i { display: block; font-style: normal; font-size: 18px; line-height: 1.1; position: relative; }
+.slot.sel { border-color: #3ddc84; box-shadow: 0 0 0 2px #3ddc84; background: rgba(61,220,132,.18); }
+.controls.one { grid-template-columns: 1fr; }
+
+/* ---------- Phone controls ---------- */
+html, body, #game, #game canvas { touch-action: none; overscroll-behavior: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+#touch { display: none; }
+body.touch #touch { display: block; }
+#stick { position: fixed; width: 116px; height: 116px; margin: -58px 0 0 -58px; border-radius: 50%;
+  background: rgba(255,255,255,.08); border: 2px solid rgba(255,255,255,.3); pointer-events: none; }
+#knob { position: absolute; left: 50%; top: 50%; width: 50px; height: 50px; margin: -25px 0 0 -25px;
+  border-radius: 50%; background: rgba(255,255,255,.4); }
+#fire { position: fixed; right: calc(16px + env(safe-area-inset-right)); bottom: calc(16px + env(safe-area-inset-bottom));
+  width: 96px; height: 96px; border-radius: 50%; border: 3px solid rgba(255,255,255,.55); background: rgba(230,57,70,.78);
+  color: #fff; font: 800 20px system-ui, sans-serif; pointer-events: auto; touch-action: none;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1; }
+#fire span { font-size: 10px; font-weight: 600; opacity: .92; max-width: 80px; text-align: center; }
+#fire.down { background: rgba(255,110,110,.95); transform: scale(.94); }
+#tbtns { position: fixed; right: calc(14px + env(safe-area-inset-right)); top: 124px; display: flex; gap: 6px; }
+#tbtns button { pointer-events: auto; min-width: 42px; height: 42px; padding: 0 10px; border-radius: 10px; font: 800 16px system-ui, sans-serif;
+  color: #fff; background: rgba(12,15,24,.78); border: 1px solid rgba(255,255,255,.25); }
+#tbtns i { font-style: normal; color: #ffd166; }
+#tbtns button.glow { border-color: #ffd166; animation: pulse 1s infinite; }
+body.touch .controls { font-size: 12px; }
+body.touch .bottom { left: 0; right: 0; bottom: 0; transform: none; width: auto; pointer-events: none; }
+body.touch .burn { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(14px + env(safe-area-inset-bottom)); width: min(220px, 30vw); margin: 0; }
+body.touch .slots { position: fixed; right: calc(12px + env(safe-area-inset-right)); bottom: calc(120px + env(safe-area-inset-bottom));
+  max-width: calc(100vw - 24px); flex-wrap: wrap; justify-content: flex-end; gap: 4px; }
+body.touch .slot { flex: none; width: 42px; height: 42px; max-width: none; padding: 0; display: flex; align-items: center; justify-content: center; }
+body.touch .slot i { font-size: 22px; }
+body.touch .slot b, body.touch .slot span { display: none; }
+body.touch .slot.locked { opacity: .25; }
+@media (max-width: 760px), (max-height: 520px) {
+  #tbtns { top: 92px; right: calc(8px + env(safe-area-inset-right)); }
+  #fire { width: 88px; height: 88px; }
+  body.touch .slots { bottom: calc(112px + env(safe-area-inset-bottom)); }
+}
+
+/* Short screens (landscape phones): keep every menu fully on screen. */
+@media (max-height: 520px) {
+  #screen { padding: 8px; }
+  .logo { font-size: clamp(30px, 14vh, 60px); }
+  h1 { font-size: 26px; margin-bottom: 4px; }
+  .tag { font-size: 13px; margin: 4px 0; }
+  .controls { margin: 8px auto; padding: 8px 12px; gap: 3px 14px; }
+  .btn { padding: 9px 26px; font-size: 16px; margin-top: 6px; }
+  .skill { padding: 6px 10px; }
+  .skill h3 { font-size: 14px; }
+  .skill p { font-size: 11px; }
+  .tree { margin: 8px 0; gap: 5px; }
+  .stats { margin: 8px 0; }
+  .stats b { font-size: 16px; }
+}
+
+/* On phones, keep toasts left of the pause and star buttons. */
+body.touch #toasts { left: calc(12px + env(safe-area-inset-left)); transform: none; align-items: flex-start; width: calc(100vw - 120px); top: 100px; }
+body.touch .toast { text-align: left; }

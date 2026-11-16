@@ -1,11 +1,18 @@
 import { Q } from './data/quips.js';
 
 export const SKILLS = [
-  { id: 'dash', name: 'Out of Office', key: 'J', code: 'KeyJ', alt: 'Space', cd: 4, desc: 'Dash away and turn invisible for a moment. Your auto-reply handles the rest.' },
-  { id: 'shield', name: 'Calendar Block', key: 'K', code: 'KeyK', cd: 14, desc: '"Focus time" blocks all damage, slows and pulls for 4 seconds.' },
-  { id: 'delegate', name: 'Delegate', key: 'L', code: 'KeyL', cd: 16, desc: 'Turn the nearest stakeholder into an ally for 10 seconds. It is their problem now.' },
-  { id: 'blast', name: 'Synergy Blast', key: 'U', code: 'KeyU', cd: 12, desc: 'A shockwave of pure alignment damages and knocks back everyone nearby.' },
-  { id: 'pause', name: 'Strategic Pause', key: 'I', code: 'KeyI', cd: 25, desc: 'Slow every stakeholder to a crawl for 5 seconds while you "take this offline".' },
+  { id: 'dash', name: 'Out of Office', icon: '💨', key: 'J', code: 'KeyJ', alt: 'Space', cd: 4, desc: 'Dash away and turn invisible for a moment. Your auto-reply handles the rest.' },
+  { id: 'shield', name: 'Calendar Block', icon: '📅', key: 'K', code: 'KeyK', cd: 14, desc: '"Focus time" blocks all damage, slows and pulls for 4 seconds.' },
+  { id: 'delegate', name: 'Delegate', icon: '👉', key: 'L', code: 'KeyL', cd: 16, desc: 'Turn the nearest stakeholder into an ally for 10 seconds. It is their problem now.' },
+  { id: 'blast', name: 'Synergy Blast', icon: '💥', key: 'U', code: 'KeyU', cd: 12, desc: 'A shockwave of pure alignment damages and knocks back everyone nearby.' },
+  { id: 'pause', name: 'Strategic Pause', icon: '⏸️', key: 'I', code: 'KeyI', cd: 25, desc: 'Slow every stakeholder to a crawl for 5 seconds while you "take this offline".' },
+];
+
+// Everything the player can pick as their current attack, in quick-menu order.
+export const ATTACKS = [
+  { id: 'melee', name: 'Hard No', icon: '👊', key: '1' },
+  { id: 'shot', name: 'Reply-All', icon: '✉️', key: '2' },
+  ...SKILLS.map((s) => ({ id: s.id, name: s.name, icon: s.icon, key: s.key })),
 ];
 
 export class Skills {
@@ -33,10 +40,16 @@ export class Skills {
     }
   }
 
+  // Hotkey path (J K L U I, Space).
   use(code) {
     const s = SKILLS.find((k) => k.code === code || k.alt === code);
+    if (s) this.cast(s);
+  }
+
+  // Returns true if the skill actually fired.
+  cast(s) {
     const g = this.g, p = g.player;
-    if (!s || !this.unlocked.has(s.id) || this.cds[s.id] > 0 || p.stunT > 0) return;
+    if (!this.unlocked.has(s.id) || this.cds[s.id] > 0 || p.stunT > 0) return false;
     this.cds[s.id] = s.cd;
     g.audio.sfx('skill');
     if (s.id === 'dash') {
@@ -68,5 +81,6 @@ export class Skills {
       this.pauseT = 5;
       g.hud.toast(Q.pause);
     }
+    return true;
   }
 }

@@ -12,10 +12,15 @@ import { TYPES, Spawner } from './enemies/types.js';
 import { BOSSES } from './enemies/boss.js';
 import { Q } from './data/quips.js';
 import { pick } from './util.js';
+import { ATTACKS } from './skills.js';
+import { initTouch } from './touch.js';
 
 // --- Renderer, scene, lights ---
 const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+// Phones (coarse pointer) get cheaper rendering; `?touch` forces the phone layout for testing.
+const forceTouch = new URLSearchParams(location.search).has('touch');
+const coarse = forceTouch || matchMedia('(pointer: coarse)').matches;
+renderer.setPixelRatio(Math.min(devicePixelRatio, coarse ? 1.5 : 2));
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -27,7 +32,7 @@ const camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.5, 30
 scene.add(new THREE.HemisphereLight(0xffffff, 0x556070, 1.25));
 const sun = new THREE.DirectionalLight(0xffffff, 1.7);
 sun.castShadow = true;
-sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.mapSize.set(coarse ? 1024 : 2048, coarse ? 1024 : 2048);
 Object.assign(sun.shadow.camera, { left: -34, right: 34, top: 34, bottom: -34, near: 1, far: 90 });
 sun.shadow.camera.updateProjectionMatrix();
 scene.add(sun, sun.target);
@@ -41,10 +46,19 @@ const g = {
   shake: 0,
   camYaw: 0,
   camDist: 22,
+  touch: coarse,
+  forceTouch,
+  sel: 'melee', // the currently selected attack
+  lastBasic: 'melee',
   enemies: [],
   zone: null,
-  input: { keys: new Set(), mouse: { 0: false, 2: false }, ndc: new THREE.Vector2(), aim: new THREE.Vector3() },
+  input: { keys: new Set(), mouse: { 0: false, 2: false }, ndc: new THREE.Vector2(), aim: new THREE.Vector3(), stick: { x: 0, y: 0 }, fire: false },
 };
+const setTouch = (on) => {
+  g.touch = on;
+  document.body.classList.toggle('touch', on);
+};
+setTouch(coarse);
 g.audio = new Sfx();
 g.world = buildOffice(scene);
 g.hud = new Hud(g);
@@ -52,6 +66,7 @@ g.combat = new Combat(g);
 g.player = new Player(g);
 g.economy = new Economy(g);
 g.skills = new Skills(g);
+initTouch(g);
 g.spawner = new Spawner(g);
 g.registry = { ...TYPES, ...BOSSES };
 g.spawn = (type, x, z) => {
@@ -65,6 +80,24 @@ g.end = (kind) => {
   g.hud.showEnd(kind);
   g.audio.sfx(kind === 'win' ? 'promo' : 'over');
 };
+g.select = (id) => {
+  if (id !== 'melee' && id !== 'shot' && !g.skills.unlocked.has(id)) return;
+  g.sel = id;
+  if (id === 'melee' || id === 'shot') g.lastBasic = id;
+  g.audio.sfx('select');
+};
+g.openTree = () => {
+  if (g.state !== 'play') return;
+  g.clearInput();
+  g.state = 'tree';
+  g.hud.showTree();
+};
+g.pause = () => {
+  if (g.state !== 'play') return;
+  g.clearInput();
+  g.state = 'paused';
+  g.hud.showPause();
+};
 window.__game = g; // handy for debugging in the browser console
 
 // --- Menus ---
@@ -73,7 +106,7 @@ g.hud.on.start = () => {
   g.state = 'play';
   g.hud.hideScreen();
   g.hud.toast('Welcome to Q4. Close tickets and manage stakeholders to drive Shareholder Value.');
-  setTimeout(() => g.hud.toast('Left click: Hard No. Right click: Reply-All. Skills: J K L U I. Coffee machines cure Burnout.'), 2500);
+  setTimeout(() => g.hud.toast(g.touch ? 'Left thumb: move. Right thumb: hold FIRE. Tap the icon bar to pick an attack.' : 'Left click: fire your selected attack (it auto-aims). Right click: Reply-All. Skills: J K L U I.'), 2500);
 };
 g.hud.on.resume = () => {
   g.state = 'play';
@@ -97,24 +130,25 @@ addEventListener('keydown', (e) => {
     if (e.code === 'Enter') g.hud.on.start();
   } else if (g.state === 'play') {
     g.input.keys.add(e.code);
-    if (e.code === 'Tab') {
-      g.state = 'tree';
-      g.hud.showTree();
-    } else if (e.code === 'Escape' || e.code === 'KeyP') {
-      g.state = 'paused';
-      g.hud.showPause();
-    } else g.skills.use(e.code);
+    if (e.code === 'Tab') g.openTree();
+    else if (e.code === 'Escape' || e.code === 'KeyP') g.pause();
+    else if (/^Digit[1-7]$/.test(e.code)) g.select(ATTACKS[+e.code.slice(5) - 1].id);
+    else g.skills.use(e.code);
   } else if (g.state === 'tree' || g.state === 'paused') {
     if (['Tab', 'Escape', 'KeyP'].includes(e.code)) g.hud.on.resume();
   }
 });
 addEventListener('keyup', (e) => g.input.keys.delete(e.code));
-addEventListener('blur', () => {
-  g.input.keys.clear();
-  g.input.mouse[0] = g.input.mouse[2] = false;
-});
+addEventListener('blur', () => g.clearInput());
+// Switch between the phone and desktop layouts depending on what the player is actually using.
+addEventListener('pointerdown', (e) => {
+  if (g.forceTouch) return;
+  const t = e.pointerType === 'touch';
+  if (t !== g.touch) setTouch(t);
+}, true);
 addEventListener('mousemove', (e) => g.input.ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1));
 canvas.addEventListener('mousedown', (e) => {
+  if (g.touch) return; // phones send emulated mouse events after a tap
   g.input.ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
   g.input.mouse[e.button] = true;
 });
@@ -136,7 +170,8 @@ function updateCamera(dt) {
   const p = g.player.pos;
   camTarget.lerp(p, Math.min(1, dt * 8));
   const pitch = 0.92;
-  const h = Math.cos(pitch) * g.camDist, y = Math.sin(pitch) * g.camDist;
+  const dist = g.camDist * (camera.aspect < 1 ? 1.35 : 1); // pull back on tall (portrait) screens
+  const h = Math.cos(pitch) * dist, y = Math.sin(pitch) * dist;
   let sx = 0, sz = 0;
   if (g.shake > 0) {
     g.shake -= dt;
