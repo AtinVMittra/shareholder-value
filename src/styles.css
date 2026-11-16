@@ -136,16 +136,24 @@ body.touch #touch { display: block; }
 body.touch .controls { font-size: 12px; }
 body.touch .bottom { left: 0; right: 0; bottom: 0; transform: none; width: auto; pointer-events: none; }
 body.touch .burn { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(14px + env(safe-area-inset-bottom)); width: min(220px, 30vw); margin: 0; }
-body.touch .slots { position: fixed; right: calc(12px + env(safe-area-inset-right)); bottom: calc(120px + env(safe-area-inset-bottom));
-  max-width: calc(100vw - 24px); flex-wrap: wrap; justify-content: flex-end; gap: 4px; }
-body.touch .slot { flex: none; width: 42px; height: 42px; max-width: none; padding: 0; display: flex; align-items: center; justify-content: center; }
+body.touch .slots { display: none; position: fixed; right: calc(12px + env(safe-area-inset-right)); bottom: calc(184px + env(safe-area-inset-bottom));
+  width: 196px; padding: 8px; flex-wrap: wrap; justify-content: flex-end; gap: 6px; pointer-events: auto;
+  background: rgba(12,15,24,.94); border: 1px solid rgba(255,255,255,.25); border-radius: 12px; }
+body.touch .slots.open { display: flex; }
+body.touch .slot { flex: none; width: 40px; height: 40px; max-width: none; padding: 0; display: flex; align-items: center; justify-content: center; }
 body.touch .slot i { font-size: 22px; }
 body.touch .slot b, body.touch .slot span { display: none; }
-body.touch .slot.locked { opacity: .25; }
+body.touch .slot.locked { display: none; }
+#selbtn { position: fixed; right: calc(22px + env(safe-area-inset-right)); bottom: calc(122px + env(safe-area-inset-bottom));
+  width: 52px; height: 52px; border-radius: 50%; background: rgba(12,15,24,.88); border: 2px solid #3ddc84; color: #fff;
+  pointer-events: auto; touch-action: manipulation; display: flex; align-items: center; justify-content: center; }
+#selbtn i { font-style: normal; font-size: 24px; }
+#selbtn span { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); font-size: 10px; color: #3ddc84; }
 @media (max-width: 760px), (max-height: 520px) {
-  #tbtns { top: 92px; right: calc(8px + env(safe-area-inset-right)); }
+  #tbtns { top: 96px; left: calc(8px + env(safe-area-inset-left)); right: auto; }
   #fire { width: 88px; height: 88px; }
-  body.touch .slots { bottom: calc(112px + env(safe-area-inset-bottom)); }
+  body.touch .slots { bottom: calc(172px + env(safe-area-inset-bottom)); }
+  #selbtn { right: calc(34px + env(safe-area-inset-right)); bottom: calc(112px + env(safe-area-inset-bottom)); }
 }
 
 /* Short screens (landscape phones): keep every menu fully on screen. */
@@ -229,3 +237,4 @@ kbd { display: inline-block; min-width: 40px; margin: 2px; padding: 9px 0; text-
   .mock-fire, .mock-stick { transform: scale(.8); }
   .link { margin-top: 4px; }
 }
+@media (max-width: 760px), (max-height: 520px) { body.touch #toasts { top: 146px; } }

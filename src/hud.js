@@ -62,7 +62,9 @@ export class Hud {
     // Click or tap an icon to select that attack.
     this.el('h-slots').addEventListener('click', (e) => {
       const slot = e.target.closest('.slot');
-      if (slot) this.g.select(slot.dataset.id);
+      if (!slot) return;
+      this.g.select(slot.dataset.id);
+      this.el('h-slots').classList.remove('open'); // phones: picking an attack closes the quick menu
     });
   }
 
@@ -153,7 +155,9 @@ export class Hud {
     });
     const fireName = this.el('fire-name');
     if (fireName) {
-      fireName.textContent = ATTACKS.find((a) => a.id === g.sel).name;
+      const cur = ATTACKS.find((a) => a.id === g.sel);
+      fireName.textContent = cur.name;
+      this.el('sel-icon').textContent = cur.icon;
       this.el('b-pts').textContent = eco.points > 0 ? ` ${eco.points}` : '';
       this.el('b-skills').classList.toggle('glow', eco.points > 0);
     }
@@ -318,7 +322,6 @@ export class Hud {
         ${step > 0 ? '<button class="btn ghost" data-act="how" data-arg="back">Back</button>' : ''}
         <button class="btn" data-act="how" data-arg="next">${last ? (then === 'start' ? 'Start Working' : 'Got It') : 'Next'}</button>
       </div>
-      ${last ? '' : '<div><button class="link" data-act="how" data-arg="skip">Skip</button></div>'}
     </div>`);
   }
 
@@ -326,7 +329,8 @@ export class Hud {
     const n = this.steps().length;
     if (arg === 'back') return this.showHow(Math.max(0, this.howStep - 1), this.howThen);
     if (arg === 'next' && this.howStep < n - 1) return this.showHow(this.howStep + 1, this.howThen);
-    // Last step, or skipped.
+    // The tutorial cannot be skipped: it only finishes from "next" on the last step.
+    if (arg !== 'next') return;
     this.markSeen();
     if (this.howThen === 'start') this.on.start();
     else if (this.howThen === 'pause') this.showPause();

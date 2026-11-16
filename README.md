@@ -25,7 +25,7 @@ Hard No also lunges you into range.
 | Esc or P | Pause |
 | M | Mute |
 
-The first time you press Clock In, a four-step tutorial (move, fire, skills, burnout) runs once. You can reopen it from "How to play" on the title and pause screens.
+The first time you press Clock In, a four-step tutorial (move, fire, skills, burnout) runs once. It cannot be skipped. You can reopen it from "How to play" on the title and pause screens.
 
 ### Phone and tablet
 
@@ -33,7 +33,7 @@ The first time you press Clock In, a four-step tutorial (move, fire, skills, bur
 | --- | --- |
 | Left thumb: joystick icon at the bottom left, or drag anywhere on the left side | Move |
 | Right thumb, hold FIRE | Use the selected attack |
-| Tap an icon in the bar above FIRE | Select an attack (the quick menu) |
+| Tap the round selector button above FIRE | Open the quick menu, then tap an attack to select it |
 | Star button | Skill tree (glows when you have a point to spend) |
 | II button | Pause |
 
