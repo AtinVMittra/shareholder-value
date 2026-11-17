@@ -41,8 +41,12 @@ export class Hud {
         </div>
         <div class="bottom">
           <div class="burn"><span>BURNOUT</span><div class="bar"><div id="h-burn"></div></div></div>
-          <div class="slots" id="h-slots"></div>
+          <div class="row">
+            <button id="b-skills" type="button" aria-label="Skills"><span class="star">★</span><small id="b-label">Skills · Tab</small><i id="b-pts"></i></button>
+            <div class="slots" id="h-slots"></div>
+          </div>
         </div>
+        <div id="pausefx"><span id="pausefx-t"></span></div>
         <div id="toasts"></div>
         <div id="card"><div class="kicker"></div><div class="title"></div><div class="sub"></div></div>
         <div id="layer"></div>
@@ -59,10 +63,17 @@ export class Hud {
       .map((s) => `<div class="slot" data-id="${s.id}" title="${s.name}"><div class="cd"></div><i>${s.icon}</i><b>${s.key}</b><span>${s.name}</span></div>`)
       .join('');
     this.slotEls = [...this.el('h-slots').children];
+    this.el('b-skills').addEventListener('click', () => this.g.openTree());
     // Click or tap an icon to select that attack.
     this.el('h-slots').addEventListener('click', (e) => {
       const slot = e.target.closest('.slot');
       if (!slot) return;
+      if (slot.classList.contains('locked')) {
+        // A locked skill: jump straight to the skill tree if there is a point to spend.
+        if (this.g.economy.points > 0) this.g.openTree();
+        else this.toast('Locked. Your next promotion earns a skill point.');
+        return;
+      }
       this.g.select(slot.dataset.id);
       this.el('h-slots').classList.remove('open'); // phones: picking an attack closes the quick menu
     });
@@ -147,7 +158,9 @@ export class Hud {
       if (id === 'melee') k = p.meleeCd / 0.4;
       else if (id === 'shot') k = p.shotCd / 0.55;
       else {
-        el.classList.toggle('locked', !g.skills.unlocked.has(id));
+        const locked = !g.skills.unlocked.has(id);
+        el.classList.toggle('locked', locked);
+        el.classList.toggle('avail', locked && eco.points > 0); // can be unlocked right now
         k = g.skills.cds[id] / SKILLS.find((s) => s.id === id).cd;
       }
       el.classList.toggle('sel', id === g.sel);
@@ -158,9 +171,19 @@ export class Hud {
       const cur = ATTACKS.find((a) => a.id === g.sel);
       fireName.textContent = cur.name;
       this.el('sel-icon').textContent = cur.icon;
-      this.el('b-pts').textContent = eco.points > 0 ? String(eco.points) : '';
-      this.el('b-skills').classList.toggle('glow', eco.points > 0);
+      const cd = cur.id === 'melee' || cur.id === 'shot' ? 0 : g.skills.cds[cur.id];
+      if (cd > 0) fireName.textContent = `${cur.name} ${Math.ceil(cd)}s`;
+      this.el('fire').classList.toggle('cooling', cd > 0);
     }
+    // The skills star: dim normally, pulsing gold with a count whenever a skill point is waiting.
+    const has = eco.points > 0;
+    this.el('b-pts').textContent = has ? String(eco.points) : '';
+    this.el('b-skills').classList.toggle('glow', has);
+    this.el('b-label').textContent = has ? 'New skill! Tab' : 'Skills · Tab';
+    // Strategic Pause: tint the screen and count it down.
+    const pausing = g.skills.pauseT > 0;
+    this.el('pausefx').classList.toggle('on', pausing);
+    if (pausing) this.el('pausefx-t').textContent = `STRATEGIC PAUSE ${Math.ceil(g.skills.pauseT)}s`;
 
     // Boss health bar
     const boss = g.enemies.find((e) => e.cfg.boss && e.awake && !e.dead);
@@ -279,7 +302,7 @@ export class Hud {
         art: `<div class="chips">${icons}</div>`,
         text: (t
           ? 'Promotions earn skill points, and the <b>★</b> next to the attack button glows when you have one to spend. Tap it to unlock skills, then tap the round attack button to choose what FIRE uses.'
-          : 'Promotions earn skill points. Press <b>Tab</b> to unlock skills, then pick an attack with <b>1 to 7</b> or the bar below. <b>J K L U I</b> cast skills instantly.'),
+          : 'Promotions earn skill points. The <b>★</b> and the skills you can unlock glow gold: press <b>Tab</b> to unlock them, then pick an attack with <b>1 to 7</b> or the bar. <b>J K L U I</b> cast skills instantly.'),
       },
       {
         title: 'Reduce burnout',

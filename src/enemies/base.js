@@ -3,6 +3,8 @@ import { makeHumanoid, animateWalk, resolveCircle, pick, rand } from '../util.js
 import { zoneAt, navDoor } from '../world/office.js';
 import { Q } from '../data/quips.js';
 
+const ALLY_TINT = 0x1d9a4a;
+
 // One stakeholder. Behaviour differences come from the config object (see types.js and boss.js).
 export class Enemy {
   constructor(g, cfg, x, z) {
@@ -44,8 +46,22 @@ export class Enemy {
   setAlly(seconds) {
     this.ally = true;
     this.allyT = seconds;
-    for (const m of this.mats) m.emissive.setHex(0x116622);
+    for (const m of this.mats) m.emissive.setHex(ALLY_TINT);
+    // A spinning green ring under their feet marks them as yours.
+    this.allyRing = new THREE.Mesh(new THREE.TorusGeometry(0.95, 0.08, 4, 18), new THREE.MeshBasicMaterial({ color: 0x35e07a }));
+    this.allyRing.rotation.x = Math.PI / 2;
+    this.allyRing.position.y = 0.15;
+    this.group.add(this.allyRing);
+    this.g.hud.float(this.pos, 'ALLY', 'good');
     this.say(pick(Q.ally));
+  }
+
+  // Leave the floor without paying out: used when a delegated stakeholder's time is up.
+  retire() {
+    if (this.dead) return;
+    this.dead = true;
+    this.g.scene.remove(this.group);
+    for (const m of this.mats) m.dispose();
   }
 
   damage(d, dir, kb) {
@@ -90,16 +106,17 @@ export class Enemy {
     this.quipT -= dt;
     if (this.flashT > 0) {
       this.flashT -= dt;
-      if (this.flashT <= 0) for (const m of this.mats) m.emissive.setHex(this.ally ? 0x116622 : 0x000000);
+      if (this.flashT <= 0) for (const m of this.mats) m.emissive.setHex(this.ally ? ALLY_TINT : 0x000000);
     }
 
     // Choose what to walk toward.
     let target = null, tpos;
     if (this.ally) {
       this.allyT -= dt;
+      this.allyRing.rotation.z += dt * 3;
       if (this.allyT <= 0) {
         g.hud.toast(`${cfg.name} has left to "pursue other opportunities".`);
-        this.die();
+        this.retire();
         return;
       }
       let best = 1e9;

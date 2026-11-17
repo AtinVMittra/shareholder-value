@@ -19,7 +19,7 @@ Hard No also lunges you into range.
 | Right click | Reply-All, whatever is selected |
 | 1 to 7, or click the icon bar | Select an attack |
 | J, K, L, U, I | Cast a skill instantly: Out of Office, Calendar Block, Delegate, Synergy Blast, Strategic Pause (unlock them with Tab). Space also triggers Out of Office. |
-| Tab | Skill tree |
+| Tab, or click the ★ | Skill tree. The ★ and any skills you can unlock glow gold when you have a point to spend. |
 | Left / Right arrows | Rotate the camera |
 | Scroll | Zoom |
 | Esc or P | Pause |

@@ -15,11 +15,21 @@ export const ATTACKS = [
   ...SKILLS.map((s) => ({ id: s.id, name: s.name, icon: s.icon, key: s.key })),
 ];
 
+// Floating text shown over the player when a skill goes off.
+const CALLOUT = {
+  dash: 'OUT OF OFFICE',
+  shield: 'CALENDAR BLOCKED',
+  delegate: 'DELEGATED',
+  blast: 'SYNERGY!',
+  pause: 'LET US TAKE THIS OFFLINE',
+};
+
 export class Skills {
   constructor(g) {
     this.g = g;
     this.unlocked = new Set();
     this.cds = {};
+    this.noteT = {};
     for (const s of SKILLS) this.cds[s.id] = 0;
     this.pauseT = 0;
   }
@@ -33,11 +43,21 @@ export class Skills {
   }
 
   update(dt) {
-    for (const s of SKILLS) if (this.cds[s.id] > 0) this.cds[s.id] -= dt;
+    for (const s of SKILLS) {
+      if (this.cds[s.id] > 0) this.cds[s.id] -= dt;
+      if (this.noteT[s.id] > 0) this.noteT[s.id] -= dt;
+    }
     if (this.pauseT > 0) {
       this.pauseT -= dt;
       this.g.timeScale = this.pauseT > 0 ? 0.2 : 1;
     }
+  }
+
+  // Tell the player why nothing happened, without spamming while FIRE is held.
+  note(s, text) {
+    if (this.noteT[s.id] > 0) return;
+    this.noteT[s.id] = 1.2;
+    this.g.hud.float(this.g.player.pos, text, 'bad');
   }
 
   // Hotkey path (J K L U I, Space).
@@ -49,25 +69,31 @@ export class Skills {
   // Returns true if the skill actually fired.
   cast(s) {
     const g = this.g, p = g.player;
-    if (!this.unlocked.has(s.id) || this.cds[s.id] > 0 || p.stunT > 0) return false;
-    this.cds[s.id] = s.cd;
-    g.audio.sfx('skill');
-    if (s.id === 'dash') {
-      p.dash();
-    } else if (s.id === 'shield') {
-      p.shieldT = 4;
-    } else if (s.id === 'delegate') {
-      let best = 14 * 14, pickE = null;
+    if (!this.unlocked.has(s.id)) return false;
+    if (this.cds[s.id] > 0) {
+      this.note(s, `${s.name}: ${Math.ceil(this.cds[s.id])}s`);
+      return false;
+    }
+    if (p.stunT > 0) return false;
+
+    if (s.id === 'delegate') {
+      let best = 14 * 14, target = null;
       for (const e of g.enemies) {
         if (e.cfg.boss || e.ally || e.dead) continue;
         const d = e.pos.distanceToSquared(p.pos);
-        if (d < best) { best = d; pickE = e; }
+        if (d < best) { best = d; target = e; }
       }
-      if (pickE) pickE.setAlly(10);
-      else {
-        g.hud.toast(Q.noDelegate);
-        this.cds[s.id] = 1;
+      if (!target) {
+        // Nothing to delegate to: no cooldown is spent.
+        if (!(this.noteT[s.id] > 0)) g.hud.toast(Q.noDelegate);
+        this.noteT[s.id] = 1.2;
+        return false;
       }
+      target.setAlly(10);
+    } else if (s.id === 'dash') {
+      p.dash();
+    } else if (s.id === 'shield') {
+      p.shieldT = 4;
     } else if (s.id === 'blast') {
       g.combat.ring(p.pos, 9, 0x4cc9f0, 0.45);
       g.shake = 0.4;
@@ -75,12 +101,16 @@ export class Skills {
         if (e.ally || e.dead) continue;
         const dx = e.pos.x - p.pos.x, dz = e.pos.z - p.pos.z;
         const d = Math.hypot(dx, dz) || 0.001;
-        if (d < 9 + e.radius) e.damage(45, { x: dx / d, z: dz / d }, 14);
+        if (d < 9 + e.radius) e.damage(45, { x: dx / d, z: dz / d }, 26);
       }
     } else if (s.id === 'pause') {
       this.pauseT = 5;
       g.hud.toast(Q.pause);
     }
+
+    this.cds[s.id] = s.cd;
+    g.audio.sfx('skill');
+    g.hud.float(p.pos, CALLOUT[s.id], 'good');
     return true;
   }
 }

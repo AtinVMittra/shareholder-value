@@ -82,7 +82,19 @@ export class Player {
 
   dash() {
     const m = this.moveDir();
-    this.dashDir.copy(m.lengthSq() > 0 ? m : this.facing);
+    if (m.lengthSq() > 0) this.dashDir.copy(m);
+    else {
+      // No direction held: escape away from the nearest stakeholder, otherwise dash where we face.
+      let best = 14 * 14, ax = 0, az = 0, found = false;
+      for (const e of this.g.enemies) {
+        if (e.ally || e.dead) continue;
+        const dx = this.pos.x - e.pos.x, dz = this.pos.z - e.pos.z;
+        const d = dx * dx + dz * dz;
+        if (d < best) { best = d; ax = dx; az = dz; found = true; }
+      }
+      if (found) this.dashDir.set(ax, 0, az).normalize();
+      else this.dashDir.copy(this.facing);
+    }
     this.dashT = 0.22;
     this.invisT = 1.6;
   }

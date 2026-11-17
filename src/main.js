@@ -249,6 +249,8 @@ function update(dt) {
   g.world.leds.material.emissiveIntensity = 0.55 + 0.45 * Math.sin(g.time * 7);
 }
 
+g.step = update; // lets tests advance the game deterministically
+
 let last = performance.now();
 function frame(now) {
   requestAnimationFrame(frame);
