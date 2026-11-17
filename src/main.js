@@ -115,7 +115,7 @@ g.hud.on.resume = () => {
 };
 g.hud.on.restart = () => location.reload();
 g.hud.on.unlock = (id) => {
-  g.skills.unlock(id);
+  if (g.skills.unlock(id)) g.hud.celebrateUnlock(id);
   g.hud.showTree();
 };
 g.hud.showTitle();
@@ -123,6 +123,7 @@ g.hud.showTitle();
 // --- Input ---
 const canvas = renderer.domElement;
 addEventListener('keydown', (e) => {
+  if (e.target && e.target.tagName === 'INPUT') return; // typing a name: leave the keys alone
   if (['Tab', 'Space', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.code)) e.preventDefault();
   if (e.repeat) return;
   if (e.code === 'KeyM') g.audio.muted = !g.audio.muted;

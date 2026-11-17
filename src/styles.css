@@ -279,3 +279,70 @@ body.touch #b-skills small { display: none; }
   background: rgba(12,15,24,.85); border: 1px solid #4cc9f0; color: #4cc9f0; font: 800 12px system-ui, sans-serif; letter-spacing: .12em; white-space: nowrap; }
 #fire.cooling { opacity: .55; }
 body.touch #pausefx span { bottom: 40px; }
+
+/* ---------- End screen: score, name entry, leaderboard ---------- */
+.scorebox { margin: 12px auto; padding: 12px 18px; max-width: 480px; border-radius: 12px; background: rgba(255,209,102,.1); border: 1px solid rgba(255,209,102,.4); }
+.scorebox small { display: block; font-size: 11px; letter-spacing: .25em; text-transform: uppercase; color: #ffd166; }
+.scorebox b { display: block; font: 800 44px ui-monospace, Menlo, monospace; color: #3ddc84; line-height: 1.1; }
+.scorebox span { font-size: 12px; opacity: .85; }
+.lb-form { margin: 14px auto 0; max-width: 480px; }
+.lb-form label { display: block; margin-bottom: 6px; font-size: 14px; opacity: .9; }
+.lb-entry { display: flex; gap: 8px; }
+.lb-entry input { flex: 1; min-width: 0; padding: 12px 14px; border-radius: 10px; border: 2px solid rgba(255,255,255,.25); background: rgba(255,255,255,.08);
+  color: #fff; font: 700 18px system-ui, sans-serif; outline: none; user-select: text; -webkit-user-select: text; }
+.lb-entry input:focus { border-color: #3ddc84; }
+.lb-entry .btn { margin: 0; padding: 12px 22px; font-size: 16px; }
+.lb-msg { min-height: 20px; margin-top: 6px; font-size: 13px; color: #ffd166; }
+.rankline { font-size: 20px; margin: 4px 0 10px; }
+.rankline b { color: #3ddc84; font-size: 30px; }
+.lb-flair { color: #ffd166; font-style: italic; margin-bottom: 8px; }
+.board { max-width: 520px; margin: 0 auto 10px; text-align: left; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,.15); }
+.lb-row { display: grid; grid-template-columns: 38px 1fr minmax(0, 1.2fr) 64px 24px; gap: 8px; align-items: center; padding: 7px 12px;
+  background: rgba(255,255,255,.05); border-bottom: 1px solid rgba(255,255,255,.07); font-size: 14px; }
+.lb-row:nth-child(even) { background: rgba(255,255,255,.08); }
+.lb-row .r { color: #8d96a8; font-weight: 800; }
+.lb-row .n { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb-row .t { font-size: 11px; opacity: .6; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb-row .s { text-align: right; font: 800 14px ui-monospace, Menlo, monospace; color: #3ddc84; }
+.lb-row.you { background: rgba(61,220,132,.22); box-shadow: inset 3px 0 0 #3ddc84; }
+.lb-row.you .r { color: #3ddc84; }
+.lb-gap { padding: 2px 0; text-align: center; background: rgba(255,255,255,.05); color: #8d96a8; letter-spacing: .4em; }
+.lb-note { font-size: 12px; color: #9aa3b5; margin: 4px 0 8px; }
+@media (max-width: 520px) { .lb-row { grid-template-columns: 32px 1fr 64px 22px; } .lb-row .t { display: none; } .scorebox b { font-size: 36px; } }
+@media (max-height: 520px) {
+  .scorebox { margin: 6px auto; padding: 6px 12px; } .scorebox b { font-size: 28px; }
+  .lb-form { margin-top: 6px; } .lb-entry input { padding: 8px 12px; font-size: 16px; } .lb-entry .btn { padding: 8px 18px; }
+  .rankline { font-size: 16px; margin: 2px 0 6px; } .rankline b { font-size: 22px; }
+  .lb-row { padding: 4px 12px; font-size: 13px; }
+}
+
+/* ---------- Skill unlocked: a big celebration ---------- */
+#unlockfx { position: fixed; inset: 0; z-index: 60; display: none; align-items: center; justify-content: center; overflow: hidden; cursor: pointer;
+  background: radial-gradient(circle at center, rgba(84,60,12,.97) 0, rgba(10,12,20,.97) 72%); }
+#unlockfx.show { display: flex; animation: ufade 3.4s forwards; }
+@keyframes ufade { 0% { opacity: 0; } 7% { opacity: 1; } 86% { opacity: 1; } 100% { opacity: 0; } }
+#unlockfx .rays { position: absolute; width: 150vmax; height: 150vmax; animation: spin 14s linear infinite;
+  background: repeating-conic-gradient(from 0deg, rgba(255,209,102,.2) 0 8deg, transparent 8deg 16deg);
+  -webkit-mask-image: radial-gradient(circle, #000 0, transparent 58%); mask-image: radial-gradient(circle, #000 0, transparent 58%); }
+@keyframes spin { to { transform: rotate(360deg); } }
+.u-card { position: relative; text-align: center; padding: 24px 34px; max-width: 92vw; animation: upop .7s cubic-bezier(.2, 1.7, .4, 1) both; }
+@keyframes upop { 0% { transform: scale(.3); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+.u-kick { font-size: 14px; font-weight: 800; letter-spacing: .5em; color: #ffd166; text-indent: .5em; }
+.u-icon { font-size: 92px; line-height: 1.15; filter: drop-shadow(0 0 22px rgba(255,209,102,.95)); animation: ubounce 1s ease-in-out infinite; }
+@keyframes ubounce { 50% { transform: translateY(-8px) scale(1.06); } }
+.u-name { font-size: clamp(30px, 7vw, 56px); font-weight: 900; text-shadow: 0 4px 0 rgba(0,0,0,.5); }
+.u-desc { max-width: 440px; margin: 6px auto 0; font-size: 15px; opacity: .92; }
+.u-hint { margin-top: 14px; display: inline-block; padding: 7px 18px; border-radius: 999px; background: #ffd166; color: #10131b; font-weight: 800; font-size: 14px; }
+.u-hint b { background: #10131b; color: #ffd166; padding: 1px 8px; border-radius: 5px; margin: 0 2px; }
+#unlockfx i { position: absolute; left: 50%; top: 44%; width: 9px; height: 15px; background: var(--c); animation: confetti 2.1s ease-out var(--d) both; }
+@keyframes confetti { 0% { transform: translate(0, 0) rotate(0); opacity: 1; } 100% { transform: translate(var(--dx), var(--dy)) rotate(var(--r)); opacity: 0; } }
+@media (max-height: 520px) { .u-icon { font-size: 56px; } .u-name { font-size: 28px; } .u-desc { font-size: 12px; } .u-card { padding: 8px 20px; } .u-hint { margin-top: 8px; } }
+
+/* The newly unlocked skill keeps glowing until you use it. */
+.slot.fresh { border-color: #3ddc84; background: rgba(61,220,132,.2); animation: freshpop .9s ease-in-out infinite; }
+.slot.fresh::after { content: 'NEW'; position: absolute; top: 2px; right: 3px; padding: 1px 4px; border-radius: 4px; background: #3ddc84; color: #10131b; font: 800 8px system-ui, sans-serif; }
+@keyframes freshpop { 50% { transform: translateY(-3px); box-shadow: inset 0 0 12px rgba(61,220,132,.8); } }
+#selbtn.fresh { border-color: #ffd166; animation: starpulse .9s ease-in-out infinite; }
+.skill.flash { animation: skillflash 1.2s ease-out 2; }
+@keyframes skillflash { 0%, 100% { box-shadow: 0 0 0 0 rgba(61,220,132,0); } 40% { box-shadow: 0 0 0 6px rgba(61,220,132,.55); background: rgba(61,220,132,.25); } }
+#card .gain { display: inline-block; margin-top: 10px; padding: 5px 16px; border-radius: 999px; background: #ffd166; color: #10131b; font: 800 14px system-ui, sans-serif; letter-spacing: .06em; }

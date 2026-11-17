@@ -3,8 +3,11 @@ import { fmtSV } from './util.js';
 import { zoneAt } from './world/office.js';
 import { RANKS, ENDINGS } from './data/quips.js';
 import { SKILLS, ATTACKS } from './skills.js';
+import { submitScore, cleanName, savedName, MAX_NAME } from './leaderboard.js';
 
 const v = new THREE.Vector3();
+const esc = (x) => String(x).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const fmtNum = (n) => Number(n).toLocaleString('en-US');
 
 // Everything drawn on top of the 3D view: stats, toasts, speech bubbles and menu screens.
 export class Hud {
@@ -48,10 +51,11 @@ export class Hud {
         </div>
         <div id="pausefx"><span id="pausefx-t"></span></div>
         <div id="toasts"></div>
-        <div id="card"><div class="kicker"></div><div class="title"></div><div class="sub"></div></div>
+        <div id="card"><div class="kicker"></div><div class="title"></div><div class="sub"></div><div class="gain"></div></div>
         <div id="layer"></div>
       </div>
-      <div id="screen"></div>`;
+      <div id="screen"></div>
+      <div id="unlockfx"></div>`;
     this.el = (id) => document.getElementById(id);
     this.hud = this.el('hud');
     this.screen = this.el('screen');
@@ -89,10 +93,13 @@ export class Hud {
     setTimeout(() => d.remove(), 4200);
   }
 
-  titleCard(kicker, title, sub) {
+  titleCard(kicker, title, sub, gain) {
     this.card.querySelector('.kicker').textContent = kicker;
     this.card.querySelector('.title').textContent = title;
     this.card.querySelector('.sub').textContent = sub || '';
+    const gainEl = this.card.querySelector('.gain');
+    gainEl.textContent = gain || '';
+    gainEl.style.display = gain ? '' : 'none';
     this.card.classList.remove('show');
     void this.card.offsetWidth; // restart the animation
     this.card.classList.add('show');
@@ -152,8 +159,15 @@ export class Hud {
     pts.textContent = `${g.touch ? 'Tap ★' : 'Tab'}: ${eco.points} skill point${eco.points > 1 ? 's' : ''}`;
     this.el('h-burn').style.width = `${p.burnout}%`;
 
+    if (this.fresh) {
+      this.fresh.t -= dt;
+      // The "new" glow ends once the skill is picked or used, or after a few seconds.
+      if (this.fresh.t <= 0 || g.sel === this.fresh.id || g.skills.cds[this.fresh.id] > 0) this.fresh = null;
+    }
+    this.el('selbtn')?.classList.toggle('fresh', !!this.fresh);
     this.slotEls.forEach((el) => {
       const id = el.dataset.id;
+      el.classList.toggle('fresh', !!this.fresh && this.fresh.id === id);
       let k;
       if (id === 'melee') k = p.meleeCd / 0.4;
       else if (id === 'shot') k = p.shotCd / 0.55;
@@ -349,8 +363,9 @@ export class Hud {
       const btn = has
         ? '<span class="owned">Unlocked</span>'
         : `<button class="btn small" data-act="unlock" data-arg="${s.id}" ${pts > 0 ? '' : 'disabled'}>Unlock</button>`;
-      return `<div class="skill ${has ? 'has' : ''}"><div class="key">${this.g.touch ? s.icon : s.key}</div><div><h3>${s.name}</h3><p>${s.desc}</p></div>${btn}</div>`;
+      return `<div class="skill ${has ? 'has' : ''}${this.flashId === s.id ? ' flash' : ''}"><div class="key">${this.g.touch ? s.icon : s.key}</div><div><h3>${s.name}</h3><p>${s.desc}</p></div>${btn}</div>`;
     }).join('');
+    this.flashId = null;
     this.show(`<h1>CAREER DEVELOPMENT PLAN</h1>
       <p class="tag">Skill points available: <b>${pts}</b>. You earn one with every promotion.</p>
       <div class="tree">${cards}</div>
@@ -358,15 +373,106 @@ export class Hud {
   }
 
   showEnd(kind) {
-    const eco = this.g.economy, e = ENDINGS[kind];
-    this.show(`<h1 class="${kind === 'win' ? 'win' : 'lose'}">${e.title}</h1><p class="tag">${e.sub}</p>
+    this.kind = 'end';
+    this.endKind = kind;
+    const eco = this.g.economy, e = ENDINGS[kind], won = kind === 'win';
+    const sc = eco.score(won);
+    this.score = { ...sc, won };
+    const parts = [`${fmtSV(eco.sv)} Shareholder Value`];
+    if (won) parts.push(`+${sc.win} win bonus`, `+${sc.time} speed bonus`);
+    this.show(`<h1 class="${won ? 'win' : 'lose'}">${e.title}</h1><p class="tag">${e.sub}</p>
+      <div class="scorebox"><small>Your score</small><b>${fmtNum(sc.total)}</b><span>${parts.join(' · ')}</span></div>
       <div class="stats">
-        <div><b>${fmtSV(eco.sv)}</b>Shareholder Value</div>
         <div><b>${RANKS[eco.rank].title}</b>Final title</div>
         <div><b>${eco.kills}</b>Stakeholders managed</div>
         <div><b>${eco.closed}</b>Tickets closed</div>
         <div><b>${eco.backlog}</b>Tickets still open</div>
       </div>
-      <button class="btn" data-act="restart">${kind === 'win' ? 'Start Next Quarter' : 'Reapply'}</button>`);
+      <form id="lb-form" class="lb-form" autocomplete="off">
+        <label for="lb-name">Enter your name to see where you rank</label>
+        <div class="lb-entry">
+          <input id="lb-name" maxlength="${MAX_NAME}" placeholder="Your name" value="${esc(savedName())}" enterkeyhint="done" autocapitalize="words">
+          <button class="btn" type="submit">Submit</button>
+        </div>
+        <div class="lb-msg" id="lb-msg"></div>
+      </form>
+      <div><button class="link" data-act="restart">${won ? 'Start next quarter without submitting' : 'Reapply without submitting'}</button></div>`);
+    const input = this.el('lb-name');
+    if (!this.g.touch) input.focus();
+    this.el('lb-form').addEventListener('submit', (ev) => {
+      ev.preventDefault();
+      this.submitScore(input.value);
+    });
+  }
+
+  async submitScore(name) {
+    if (this.submitting) return;
+    const msg = this.el('lb-msg'), btn = this.el('lb-form').querySelector('button');
+    if (!cleanName(name)) {
+      msg.textContent = 'Type a name first.';
+      return;
+    }
+    this.submitting = true;
+    btn.disabled = true;
+    msg.textContent = 'Submitting…';
+    const entry = { name: cleanName(name), score: this.score.total, won: this.score.won, title: RANKS[this.g.economy.rank].title };
+    try {
+      this.showBoard(await submitScore(entry), entry);
+    } catch (err) {
+      msg.textContent = err.message || 'Could not save your score.';
+      btn.disabled = false;
+    }
+    this.submitting = false;
+  }
+
+  boardRow(rank, r, you) {
+    return `<div class="lb-row${you ? ' you' : ''}"><span class="r">${fmtNum(rank)}</span><span class="n">${esc(r.name)}</span>` +
+      `<span class="t">${esc(r.title || '')}</span><span class="s">${fmtNum(r.score)}</span><span class="w">${r.won ? '🏆' : ''}</span></div>`;
+  }
+
+  showBoard(res, entry) {
+    this.kind = 'board';
+    const won = this.endKind === 'win';
+    const rows = res.top.map((r, i) => this.boardRow(i + 1, r, r.id === res.id)).join('');
+    const mine = res.rank > res.top.length ? `<div class="lb-gap">⋯</div>${this.boardRow(res.rank, entry, true)}` : '';
+    const where = res.source === 'global' ? 'worldwide' : 'on this device';
+    const note = res.fellBack
+      ? 'Could not reach the global board, so this score was saved on this device only.'
+      : res.source === 'local' ? 'Scores are saved on this device.' : '';
+    const flair = res.rank === 1 ? '<div class="lb-flair">Number one. Expect a meeting about it.</div>' : '';
+    this.show(`<h1>LEADERBOARD</h1>
+      <p class="rankline">You ranked <b>#${fmtNum(res.rank)}</b> of ${fmtNum(res.total)} ${where}</p>${flair}
+      <div class="board">${rows}${mine}</div>
+      ${note ? `<p class="lb-note">${note}</p>` : ''}
+      <button class="btn" data-act="restart">${won ? 'Start Next Quarter' : 'Reapply'}</button>`);
+  }
+
+  // ---- Skill unlocked: a big celebration over whatever screen is up ----
+  celebrateUnlock(id) {
+    const s = SKILLS.find((k) => k.id === id);
+    if (!s) return;
+    const hint = this.g.touch ? 'Pick it from the attack button' : `Press <b>${s.key}</b> or choose it on the bar`;
+    const colors = ['#ffd166', '#3ddc84', '#4cc9f0', '#ff8fab', '#c77dff'];
+    const confetti = Array.from({ length: 34 }, (_, i) => {
+      const dx = Math.round((Math.random() - 0.5) * 120), dy = Math.round(-10 + Math.random() * 70);
+      return `<i style="--dx:${dx}vw;--dy:${dy}vh;--r:${Math.round(Math.random() * 720 - 360)}deg;--d:${(Math.random() * 0.25).toFixed(2)}s;--c:${colors[i % colors.length]}"></i>`;
+    }).join('');
+    const fx = this.el('unlockfx');
+    fx.innerHTML = `<div class="rays"></div>${confetti}
+      <div class="u-card"><div class="u-kick">SKILL UNLOCKED</div><div class="u-icon">${s.icon}</div>
+      <div class="u-name">${s.name}</div><div class="u-desc">${s.desc}</div><div class="u-hint">${hint}</div></div>`;
+    fx.onclick = () => fx.classList.remove('show');
+    fx.classList.remove('show');
+    void fx.offsetWidth; // restart the animation
+    fx.classList.add('show');
+    clearTimeout(this.fxTimer);
+    this.fxTimer = setTimeout(() => fx.classList.remove('show'), 3400);
+    this.fresh = { id, t: 12 };
+    this.flashId = id;
+    try {
+      navigator.vibrate?.([40, 50, 90]);
+    } catch {
+      /* vibration is optional */
+    }
   }
 }

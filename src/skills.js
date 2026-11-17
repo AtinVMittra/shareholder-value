@@ -38,7 +38,7 @@ export class Skills {
     if (this.unlocked.has(id) || this.g.economy.points <= 0) return false;
     this.g.economy.points--;
     this.unlocked.add(id);
-    this.g.audio.sfx('promo');
+    this.g.audio.sfx('unlock');
     return true;
   }
 

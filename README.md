@@ -63,3 +63,18 @@ To build it yourself, run `npm run build`. This writes a static site to `dist/` 
 - `src/skills.js`: the five unlockable skills.
 - `src/economy.js`: Shareholder Value, promotions, the backlog and the quarter timer.
 - `src/world/office.js`: the floor plan and furniture.
+
+## Leaderboard
+
+At the end of a run the player types a name and sees their rank. Score is Shareholder Value in $M, plus 500 for
+beating the Chief Vision Officer and 1 point per 10 seconds left on the clock when $1B was reached.
+
+By default scores are saved on each player's own device. To make the board shared by everyone:
+
+1. Create a free project at https://supabase.com.
+2. In its SQL Editor, run `supabase/schema.sql`.
+3. Put the project URL and the anon public key (Project Settings, API) into `src/config.js`, then push.
+
+The anon key is meant to be public, and the table only allows reading and adding rows. Anyone can still submit a fake
+score from the browser, and you remove bad rows from the Supabase dashboard. If the global board is unreachable the
+game falls back to saving the score on the device.

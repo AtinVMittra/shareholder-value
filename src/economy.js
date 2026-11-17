@@ -32,6 +32,14 @@ export class Economy {
     return 1 + this.rank * 0.9;
   }
 
+  // The leaderboard score: Shareholder Value, plus a win bonus and a speed bonus for beating the boss.
+  score(won) {
+    const sv = Math.round(this.sv);
+    const win = won ? 500 : 0;
+    const time = won ? Math.floor(this.timeLeft / 10) : 0; // 1 point per 10 seconds left when you reached $1B
+    return { sv, win, time, total: sv + win + time };
+  }
+
   addBacklog(n) {
     this.backlog += n;
   }
@@ -56,7 +64,7 @@ export class Economy {
     this.rank++;
     this.points++;
     const r = RANKS[this.rank];
-    g.hud.titleCard('PROMOTED', r.title, r.blurb);
+    g.hud.titleCard('PROMOTED', r.title, r.blurb, g.touch ? '+1 SKILL POINT · tap the star' : '+1 SKILL POINT · press Tab');
     g.audio.sfx('promo');
     for (const name of g.world.unlock(this.rank)) g.hud.toast(`Badge access granted: ${name}`);
     if (this.rank === 1) g.spawn('reorg', 15, -20);
