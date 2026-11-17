@@ -73,7 +73,9 @@ By default scores are saved on each player's own device. To make the board share
 
 1. Create a free project at https://supabase.com.
 2. In its SQL Editor, run `supabase/schema.sql`.
-3. Put the project URL and the anon public key (Project Settings, API) into `src/config.js`, then push.
+3. Put the project URL and the publishable key (Project Settings, API Keys, the `sb_publishable_` one, never the secret key) into `src/config.js`, then push.
+
+This repo is already connected to its own Supabase project.
 
 The anon key is meant to be public, and the table only allows reading and adding rows. Anyone can still submit a fake
 score from the browser, and you remove bad rows from the Supabase dashboard. If the global board is unreachable the

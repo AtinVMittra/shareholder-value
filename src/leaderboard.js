@@ -60,7 +60,13 @@ async function api(path, { method = 'GET', body, headers = {}, signal } = {}) {
   const res = await fetch(`${cfg.url}/rest/v1/${path}`, {
     method,
     signal,
-    headers: { apikey: cfg.key, Authorization: `Bearer ${cfg.key}`, 'Content-Type': 'application/json', ...headers },
+    headers: {
+      apikey: cfg.key,
+      // Legacy anon keys are JWTs and go in Authorization too; the newer publishable keys (sb_publishable_...) are not JWTs.
+      ...(cfg.key.startsWith('eyJ') ? { Authorization: `Bearer ${cfg.key}` } : {}),
+      'Content-Type': 'application/json',
+      ...headers,
+    },
     body: body ? JSON.stringify(body) : undefined,
   });
   if (!res.ok) throw new Error(`Leaderboard request failed (${res.status})`);
